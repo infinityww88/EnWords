@@ -1,24 +1,42 @@
-hello, world
-
-hello
-adfa
-
-adfa
-
+subsequently 
+consequence
+consequently
+consequent
+sequence
+sequential
+sequel
+series
+serial
+serialize
+serialization
+serializable
 -
 
-adfa
-adfa
-adfa
+subsequently 
+consequence
+consequently
+consequent
+sequence
+sequential
+sequel
+series
+serial
+serialize
+serialization
 
 --
 
-adfa
-adfafafa
-asdfa
+majority
+minority
+major
+minor
 
 -
 
-adfa
-asdfa
+majority
+minority
+major
+minor
+carry on
+conclude with
 

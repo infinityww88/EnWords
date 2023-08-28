@@ -4,7 +4,7 @@ import "fmt"
 
 type Word struct {
 	Wid            int64  `gorm:"column:wid;primarykey;autoincrement"`
-	Word           string `gorm:"column:word;not null"`
+	Word           string `gorm:"column:word;unique;not null"`
 	IsPhrase       bool   `gorm:"column:is_phrase;default:0"`
 	PhoneticSymbol string `gorm:"column:phonetic_symbol"`
 	Meaning        string `gorm:"column:meaning"`
@@ -16,24 +16,26 @@ func (self Word) String() string {
 
 type Sentence struct {
 	Sid      int64  `gorm:"column:sid;primarykey;autoincrement"`
-	sentence string `gorm:"column:sentence;not null"`
+	Sentence string `gorm:"column:sentence;not null"`
+	Digit    string `gorm:"column:digit;unique;not null"`
 }
 
 type WordSentence struct {
-	WSid int64 `gorm:"column:sid;primarykey;autoincrement"`
-	Wid  int64 `gorm:"column:wid;not null"`
-	Sid  int64 `gorm:"column:sid;not null"`
+	WSid int64 `gorm:"column:wsid;primarykey;autoincrement"`
+	Wid  int64 `gorm:"column:wid;not null;uniqueIndex:ws_idx"`
+	Sid  int64 `gorm:"column:sid;not null;uniqueIndex:ws_idx"`
 }
 
 type Note struct {
-	Nid  int64  `gorm:"column:sid;primarykey;autoincrement"`
-	note string `gorm:"column:note;not null"`
+	Nid   int64  `gorm:"column:nid;primarykey;autoincrement"`
+	Note  string `gorm:"column:note;not null"`
+	Digit string `gorm:"column:digit;unique;not null"`
 }
 
 type WordNote struct {
-	WNid int64 `gorm:"column:sid;primarykey;autoincrement"`
-	Wid  int64 `gorm:"column:wid;not null"`
-	Nid  int64 `gorm:"column:nid;not null"`
+	WNid int64 `gorm:"column:wnid;primarykey;autoincrement"`
+	Wid  int64 `gorm:"column:wid;not null;uniqueIndex:wn_idx"`
+	Nid  int64 `gorm:"column:nid;not null;uniqueIndex:wn_idx"`
 }
 
 type OEWord struct {

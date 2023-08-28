@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"log"
+	"strings"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -26,19 +29,20 @@ func InitDB() error {
 	return nil
 }
 
-func WordExists(word string) bool {
+func GetWord(word string) (Word, bool) {
 	w := Word{}
 	result := db.Model(&Word{}).Where(Word{Word: word}).First(&w)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return false
+		return w, false
 	}
-	return true
+	return w, true
 }
 
-func InsertWordIfNotExist(word string) int64 {
-	w := Word{}
-	db.FirstOrCreate(&w, Word{Word: word})
-	return w.Wid
+func InsertWordAlways(word Word) Word {
+	ret := Word{}
+	word.IsPhrase = strings.Contains(word.Word, " ")
+	db.Where(Word{Word: word.Word}).Attrs(word).FirstOrCreate(&ret)
+	return ret
 }
 
 func IsValidWord(word string) bool {
@@ -57,30 +61,70 @@ func CheckInvalidWords(words []string) []string {
 	return ret
 }
 
-func InsertSentence(sentence string) int64 {
-	s := Sentence{sentence: sentence}
-	db.Create(&s)
-	return s.Sid
+func InsertSentenceAlways(sentence string) int64 {
+	ret := Sentence{}
+	db.Where(Sentence{Digit: digit(sentence)}).
+		Attrs(Sentence{Sentence: sentence}).
+		FirstOrCreate(&ret)
+	return ret.Sid
 }
 
+/*
 func InsertSentenceInfo(si *SentenceInfo) {
-	sid := InsertSentence(si.Sentence)
+	sid := InsertSentenceAlways(si.Sentence)
 	for _, w := range si.Words {
-		wid := InsertWordIfNotExist(w)
+		wid := InsertWordAlways(w)
 		db.Create(WordSentence{Wid: wid, Sid: sid})
 	}
 }
+*/
 
-func InsertNote(note string) int64 {
-	n := Note{note: note}
-	db.Create(&n)
-	return n.Nid
+func digit(content string) string {
+	d := md5.Sum([]byte(content))
+	return hex.EncodeToString(d[:])
 }
 
+func InsertNoteAlways(note string) int64 {
+	ret := Note{}
+	db.Where(Note{Digit: digit(note)}).
+		Attrs(Note{Note: note}).
+		FirstOrCreate(&ret)
+	return ret.Nid
+}
+
+/*
 func InsertNoteInfo(ni *NoteInfo) {
-	nid := InsertNote(ni.Note)
+	nid := InsertNoteAlways(ni.Note)
 	for _, w := range ni.Words {
-		wid := InsertWordIfNotExist(w)
+		wid := InsertWordAlways(w)
 		db.Create(WordNote{Wid: wid, Nid: nid})
 	}
+}
+*/
+
+func InsertWordSentenceAlways(wid int64, sid int64) int64 {
+	ws := WordSentence{}
+	db.FirstOrCreate(&ws, WordSentence{Wid: wid, Sid: sid})
+	return ws.WSid
+}
+
+func InsertWordNoteAlways(wid int64, nid int64) int64 {
+	wn := WordNote{}
+	db.FirstOrCreate(&wn, WordNote{Wid: wid, Nid: nid})
+	return wn.WNid
+}
+
+func UpdateWord(word string, meaning string) int64 {
+	ret := db.Model(&Word{}).Where("word = ?", word).Update("meaning", meaning)
+	return ret.RowsAffected
+}
+
+func UpdateSentence(sid int64, sentence string) int64 {
+	ret := db.Model(&Sentence{}).Where("sid = ?", sid).Updates(Sentence{Sentence: sentence, Digit: digit(sentence)})
+	return ret.RowsAffected
+}
+
+func UpdateNote(nid int64, note string) int64 {
+	ret := db.Model(&Note{}).Where("nid = ?", nid).Updates(Note{Note: note, Digit: digit(note)})
+	return ret.RowsAffected
 }

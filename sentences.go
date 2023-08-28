@@ -7,9 +7,41 @@ import (
 	"strings"
 )
 
+type WordInfo struct {
+	word   string
+	lineno int
+}
+
 type SentenceInfo struct {
 	Sentence string
-	Words    []string
+	Words    []WordInfo
+}
+
+func LoadWord(word string) (Word, error) {
+	DownloadWordSound(word)
+	w, err := GetOnlineWord(word)
+	if err != nil {
+		return Word{}, err
+	}
+	w = InsertWordAlways(w)
+	return w, nil
+}
+
+func LoadSentenceInfo(sis []SentenceInfo) {
+	for _, si := range sis {
+		sid := InsertSentenceAlways(si.Sentence)
+		for _, wi := range si.Words {
+			var w Word
+			var err error
+			var ok bool
+			if w, ok = GetWord(wi.word); !ok {
+				if w, err = LoadWord(wi.word); err != nil {
+					panic(fmt.Errorf("load word %s error %w at line [%d]", wi.word, err, wi.lineno))
+				}
+			}
+			InsertWordSentenceAlways(w.Wid, sid)
+		}
+	}
 }
 
 func ReadSentenceInfo(reader io.Reader) []SentenceInfo {
@@ -42,10 +74,8 @@ func ReadSentenceInfo(reader io.Reader) []SentenceInfo {
 					state = STATE_SENTENCE
 				}
 			} else {
-				if !IsValidWord(line) {
-					panic(fmt.Errorf("word `%s` is not valid at line %d", line, lineno))
-				}
-				si.Words = append(si.Words, line)
+				si.Words = append(si.Words,
+					WordInfo{word: line, lineno: lineno})
 				wordSpaceNum = 0
 			}
 		}
