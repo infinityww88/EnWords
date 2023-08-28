@@ -1,0 +1,13 @@
+ wget 'https://dict.youdao.com/dictvoice?audio=prevent+from+doing&type=2' -O prevent_from_doing.mp3
+
+  wget 'https://dict.youdao.com/dictvoice?audio=symbol&type=2' -O symbol.mp3
+
+  type=1 => uk
+  type=2 => us
+
+  youdao jmespath:
+
+  curl -XPOST --data 'q=symbol&le=en&t=3&client=web&keyfrom=webdict' 'https://dict.youdao.com/jsonapi_s?doctype=json&jsonversion=4'
+
+  ec.word.usphone
+  ec.word.trs[*].{pos,tran}
