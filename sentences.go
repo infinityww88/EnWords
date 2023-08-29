@@ -55,7 +55,6 @@ func ReadSentenceInfo(reader io.Reader) []SentenceInfo {
 
 	p := bufio.NewScanner(reader)
 	lineno := 0
-	wordSpaceNum := 0
 	for p.Scan() {
 		line := strings.TrimSpace(p.Text())
 		lineno++
@@ -63,20 +62,15 @@ func ReadSentenceInfo(reader io.Reader) []SentenceInfo {
 		case STATE_SENTENCE:
 			if line != "" {
 				state = STATE_WORDS
-				wordSpaceNum = 0
 				si = SentenceInfo{Sentence: p.Text()}
 			}
 		case STATE_WORDS:
-			if line == "" {
-				wordSpaceNum++
-				if wordSpaceNum == 2 {
-					ret = append(ret, si)
-					state = STATE_SENTENCE
-				}
-			} else {
+			if line == "-" {
+				ret = append(ret, si)
+				state = STATE_SENTENCE
+			} else if line != "" {
 				si.Words = append(si.Words,
 					WordInfo{word: line, lineno: lineno})
-				wordSpaceNum = 0
 			}
 		}
 	}
