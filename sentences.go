@@ -19,7 +19,7 @@ type SentenceInfo struct {
 
 func LoadWord(word string) (Word, error) {
 	DownloadWordSound(word)
-	w, err := GetOnlineWord(word)
+	w, err := GetOnlineWordApi(word)
 	if err != nil {
 		return Word{}, err
 	}
