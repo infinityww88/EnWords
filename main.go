@@ -41,7 +41,7 @@ func loadNotes() {
 	}
 }
 
-func main() {
+func entry() {
 
 	p := arg.MustParse(&args)
 	if p.Subcommand() == nil {
@@ -71,4 +71,8 @@ func main() {
 		w = InsertWordAlways(w)
 		fmt.Printf("insert at id %d\n", w.Wid)
 	}
+}
+
+func main() {
+	ExtractWikipedia("https://en.wikipedia.org/wiki/World_War_II")
 }
