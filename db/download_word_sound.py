@@ -24,7 +24,7 @@ for w in remainWords:
     url = f"https://dict.youdao.com/dictvoice?audio={w}&type=2"
     cmd = f"curl '{url}' > word_sounds/{w}.mp3"
     for i in range(3):
-        time.sleep(5)
+        time.sleep(1)
         retcode = sp.call(cmd, shell=True, stderr=sp.DEVNULL)
         if retcode == 0:
             print(f"ok {w}")
