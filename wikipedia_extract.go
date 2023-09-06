@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -15,25 +15,28 @@ func Must(err error) {
 	}
 }
 
-func ExtractWikipedia(url string) {
+func ExtractWikipedia(url string) string {
 	resp, err := http.Get(url)
 	Must(err)
 	defer resp.Body.Close()
-	ParseWikipedia(resp.Body)
+	return ParseWikipedia(resp.Body)
 }
 
-func ParseWikipedia(r io.Reader) {
+func ParseWikipedia(r io.Reader) string {
 	doc, err := goquery.NewDocumentFromReader(r)
 	Must(err)
 	sel := doc.Find(".mw-parser-output h2,h3,h4,p")
 	re, err := regexp.Compile(`\[(\d+|edit)\]`)
 	Must(err)
+	sb := strings.Builder{}
 	for i := 0; i < sel.Length(); i++ {
 		s := sel.Slice(i, i+1)
 		text := re.ReplaceAllString(s.Text(), "")
 		if goquery.NodeName(s) == "h2" && text == "See also" {
 			break
 		}
-		fmt.Println(text)
+		sb.WriteString(text)
+		sb.WriteString("\n")
 	}
+	return sb.String()
 }

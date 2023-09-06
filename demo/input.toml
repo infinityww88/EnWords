@@ -1,0 +1,34 @@
+recall = [
+"word0",
+"word1",
+"word2",
+]
+
+# doc type: wiki note, sentence
+
+wiki = [
+"https://en.wikipedia.org/wiki/World_War_II",
+"https://en.wikipedia.org/wiki/MG_42",
+]
+
+note = [
+"""
+>title
+body
+body
+""",
+
+"""
+>title
+
+body
+
+body
+
+"""
+]
+
+sentence = [
+"""sentence0""",
+"""sentence1""",
+]

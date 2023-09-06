@@ -2,125 +2,65 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
+	"io"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/gin-gonic/gin"
+	"github.com/dlclark/regexp2"
 )
 
-type InsertWordCmd struct {
-	Word     string `arg:"-w,required"`
-	Phonetic string `arg:"-p,required"`
-	Meaning  string `arg:"-m,required"`
+type Cmd struct {
+	File string `arg:"-f,env:EN_DRAFT" default:"draft.toml"`
 }
 
-type BatchLoadCmd struct {
-	LoadType string `arg:"required,positional"`
-}
-
-var args struct {
-	InsertWord *InsertWordCmd `arg:"subcommand:insertword"`
-	BatchLoad  *BatchLoadCmd  `arg:"subcommand:batchload"`
-}
-
-func loadSentences() {
-	if f, err := os.Open("draft/sentences.txt"); err == nil {
-		sis := ReadSentenceInfo(f)
-		LoadSentenceInfo(sis)
-	} else {
-		panic(err)
+func Split(text string, re *regexp2.Regexp) []string {
+	ret := []string{}
+	start := 0
+	runes := []rune(text)
+	m, _ := re.FindRunesMatch(runes)
+	for m != nil {
+		ret = append(ret, string(runes[start:m.Index]))
+		start = m.Index + len(m.Runes())
+		m, _ = re.FindNextMatch(m)
 	}
+	ret = append(ret, string(runes[start:]))
+	return ret
 }
 
-func loadNotes() {
-	if f, err := os.Open("draft/notes.txt"); err == nil {
-		nis := ReadNoteInfo(f)
-		LoadNoteInfo(nis)
-	} else {
-		panic(err)
-	}
-}
+func SplitSentence(text string) []string {
+	re := regexp2.MustCompile(`\.\s+(?=[A-Z])`, 0)
 
-func entry() {
-
-	p := arg.MustParse(&args)
-	if p.Subcommand() == nil {
-		p.Fail("no subcommand specifed")
-	}
-
-	if e := InitDB(); e != nil {
-		log.Fatal("init db failed", e)
-		os.Exit(1)
-	}
-
-	switch {
-	case args.BatchLoad != nil:
-		switch args.BatchLoad.LoadType {
-		case "sentences":
-			loadSentences()
-		case "notes":
-			loadNotes()
-		default:
-			p.Fail("batch load must be \"sentences\" or \"notes\"")
-		}
-	case args.InsertWord != nil:
-		w := Word{
-			Word:           args.InsertWord.Word,
-			PhoneticSymbol: args.InsertWord.Phonetic,
-			Meaning:        args.InsertWord.Meaning}
-		w = InsertWordAlways(w)
-		fmt.Printf("insert at id %d\n", w.Wid)
-	}
-}
-
-func TryWiki() {
-	/*
-		os.Setenv("HTTPS_PROXY", "http://127.0.0.1:1080")
-		ExtractWikipedia("https://en.wikipedia.org/wiki/NSA")
-	*/
-	/*
-		f, err := os.Open("wiki.html")
-		Must(err)
-		defer f.Close()
-		ParseWikipedia(f)
-	*/
-}
-
-func MyPlugin() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		dir := path.Dir(c.Request.URL.Path)
-		parts := strings.Split(dir, "/")
-		if parts[1] == "assets" {
-			path := c.Request.URL.Path
-			if ".gz" == path[len(path)-3:] {
-				c.Header("Content-Encoding", "gzip")
-				if len(path) >= 8 && ".wasm.gz" == path[len(path)-8:] {
-					c.Header("Content-Type", "application/wasm")
-				} else {
-					c.Header("Content-Type", "application/x-gzip")
-				}
+	ret := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		_r := Split(line, re)
+		for _, s := range _r {
+			if len([]rune(s)) >= 50 {
+				ret = append(ret, s)
 			}
 		}
 	}
+	return ret
 }
 
 func main() {
-	r := gin.New()
-	r.Use(gin.Logger())
-	r.Use(MyPlugin())
-	r.GET("/api", func(c *gin.Context) {
-		data := map[string]any{
-			"lang": "golang",
-			"tag":  "<br>",
-		}
-		c.AsciiJSON(http.StatusOK, data)
-	})
-	r.Static("/assets", "./assets")
-	// remove server.key password
-	r.RunTLS(":8083", "./server.crt", "./server.key")
-	//r.Run(":8080")
+	var cmd Cmd
+	arg.MustParse(&cmd)
+
+	//os.Setenv("HTTPS_PROXY", "http://127.0.0.1:1080")
+	//fmt.Println(ExtractWikipedia("https://en.wikipedia.org/wiki/MG_42"))
+	/*
+		InitDB()
+		LoadDataF(cmd.File)
+	*/
+	InitDB()
+	f, err := os.Open("wiki.txt")
+	Must(err)
+	_t, err := io.ReadAll(f)
+	Must(err)
+	text := string(_t)
+	for _, s := range SplitSentence(text) {
+		fmt.Println("insert", s)
+		InsertDocs(s, "MG_42", "wiki")
+	}
 }

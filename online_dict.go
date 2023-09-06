@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,6 +16,13 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type Word struct {
+	Word           string
+	IsPhrase       bool
+	PhoneticSymbol string
+	Meaning        string
+}
+
 var v = `curl -XPOST --data 'q=symbol&le=en&t=3&client=web&keyfrom=webdict' 'https://dict.youdao.com/jsonapi_s?doctype=json&jsonversion=4'`
 
 var dictUrl = "https://dict.youdao.com/jsonapi_s?doctype=json&jsonversion=4"
@@ -24,8 +30,6 @@ var dictUrl = "https://dict.youdao.com/jsonapi_s?doctype=json&jsonversion=4"
 var dictPageUrl = "https://www.youdao.com/result?word=%s&lang=en"
 
 var soundUrl = "https://dict.youdao.com/dictvoice"
-
-var WordNotFound = errors.New("Word Not Found")
 
 var limiter = rate.NewLimiter(2, 1)
 

@@ -1,9 +1,14 @@
-create table if not exists words(wid integer primary key autoincrement, word text not null, is_phrase integer default 0, phonetic_symbol text, meaning text);
+-- client db
 
-create table if not exists sentences(sid integer primary key autoincrement, sentence text not null);
+create table if not exists recall(word text not null primary key, recall_score integer default 0, last_time integer default 0);
 
-create table if not exists word_sentences(wsid integer primary key autoincrement, wid int not null, sid int not null);
+-- server db
 
-create table if not exists notes(nid integer primary key autoincrement, note text not null);
+create virtual table if not exists docs using fts5(body, title unindexed, type unindexed, tokenize='porter unicode61');
 
-create table if not exists word_notes(wnid integer primary key autoincrement, wid int not null, nid int not null);
+-- static db
+
+create table if not exists zh_dict (word text not null primary key, meaning text not null, phonic text not null);
+
+create virtual table if not exists oe_dict using fts5(word_exp, usage unindexed, tokenize='porter unicode61');
+
