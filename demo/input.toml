@@ -1,34 +1,25 @@
 recall = [
-"word0",
-"word1",
-"word2",
+"instance",
+"error",
+"database",
 ]
 
 # doc type: wiki note, sentence
 
 wiki = [
-"https://en.wikipedia.org/wiki/World_War_II",
-"https://en.wikipedia.org/wiki/MG_42",
+#"https://en.wikipedia.org/wiki/World_War_II",
+#"https://en.wikipedia.org/wiki/MG_42",
 ]
 
 note = [
 """
->title
-body
-body
+>-aneous
+simult-aneous
+miscll-aneous
+spont-aneous
 """,
-
-"""
->title
-
-body
-
-body
-
-"""
 ]
 
 sentence = [
-"""sentence0""",
-"""sentence1""",
+"""First, when you drop database objects such as tables, views, indexes, and triggers or delete data from tables, the database file size remains unchanged. Because SQLite just marks the deleted objects as free and reserves it for the future uses. As a result, the size of the database file always grows in size.""",
 ]

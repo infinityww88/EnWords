@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/dlclark/regexp2"
 )
 
 type Data struct {
@@ -18,10 +19,41 @@ type Data struct {
 	Sentence []string
 }
 
-var NEWLINE = "\r\n"
+var SPLIT_NEWLINE = "\r\n"
+var JOIN_NEWLINE = "\n"
+
+func Split(text string, re *regexp2.Regexp) []string {
+	ret := []string{}
+	start := 0
+	runes := []rune(text)
+	m, _ := re.FindRunesMatch(runes)
+	for m != nil {
+		ret = append(ret, string(runes[start:m.Index]))
+		start = m.Index + len(m.Runes())
+		m, _ = re.FindNextMatch(m)
+	}
+	ret = append(ret, string(runes[start:]))
+	return ret
+}
+
+func SplitSentence(text string) []string {
+	re := regexp2.MustCompile(`\.\s+(?=[A-Z])`, 0)
+
+	ret := []string{}
+	for _, line := range strings.Split(text, "\n") {
+		_r := Split(line, re)
+		for _, s := range _r {
+			if len([]rune(s)) >= 50 {
+				ret = append(ret, s)
+			}
+		}
+	}
+	return ret
+}
 
 func LoadRecall(words []string) {
 	for _, w := range words {
+		slog.Info("Load recall " + w)
 		_, err := GetZHWord(w)
 		Must(err)
 		InsertRecallAlways(w)
@@ -30,6 +62,7 @@ func LoadRecall(words []string) {
 
 func LoadWiki(wiki []string) {
 	for _, w := range wiki {
+		slog.Info("Load wiki " + w)
 		title := path.Base(w)
 		_, err := GetDoc(title, "wiki")
 		if err == nil {
@@ -40,7 +73,10 @@ func LoadWiki(wiki []string) {
 			panic(fmt.Errorf("wiki title is empty: %s", w))
 		}
 		body := ExtractWikipedia(w)
-		InsertDocs(body, title, "wiki")
+		for _, s := range SplitSentence(body) {
+			InsertDocs(s, title, "wiki")
+		}
+
 	}
 }
 
@@ -51,8 +87,9 @@ func LoadNote(note []string) {
 	}
 	tns := []tnote{}
 	for _, c := range note {
+		slog.Info("Load note " + c)
 		c = strings.TrimSpace(c)
-		_t := strings.Split(c, NEWLINE)
+		_t := strings.Split(c, SPLIT_NEWLINE)
 		if len(_t) < 2 {
 			panic(fmt.Errorf("note must contain more than two lines: %s", c))
 		}
@@ -60,7 +97,7 @@ func LoadNote(note []string) {
 			panic(fmt.Errorf("note title must start with \">\":\n%s", c))
 		}
 		title := _t[0][1:]
-		body := strings.TrimSpace(strings.Join(_t[1:], NEWLINE))
+		body := strings.TrimSpace(strings.Join(_t[1:], JOIN_NEWLINE))
 		tns = append(tns, tnote{title: title, body: body})
 	}
 	for _, n := range tns {
@@ -70,6 +107,7 @@ func LoadNote(note []string) {
 
 func LoadSentence(sentences []string) {
 	for _, line := range sentences {
+		slog.Info("Load sentence " + line)
 		InsertDocs(line, "", "sentence")
 	}
 }
